@@ -13,32 +13,15 @@ public enum HexagonalAnimationType { case Spiral, Circle, None }
 public struct HexagonalItemViewAppearance {
     
     //item appearance
-    public let needToConfigureItem: Bool
-    public let itemSize: CGFloat
-    public let itemSpacing: CGFloat
-    public let itemBorderWidth: CGFloat
-    public let itemBorderColor: UIColor
+    public var needToConfigureItem: Bool
+    public var itemSize: CGFloat
+    public var itemSpacing: CGFloat
+    public var itemBorderWidth: CGFloat
+    public var itemBorderColor: UIColor
     
     //animation
-    public let animationType: HexagonalAnimationType
-    public let animationDuration: NSTimeInterval
-    
-    public init(needToConfigureItem: Bool,
-            itemSize: CGFloat,
-            itemSpacing: CGFloat,
-            itemBorderWidth: CGFloat,
-            itemBorderColor: UIColor,
-            animationType: HexagonalAnimationType,
-            animationDuration: NSTimeInterval) {
-        
-        self.needToConfigureItem = needToConfigureItem
-        self.itemSize = itemSize
-        self.itemSpacing = itemSpacing
-        self.itemBorderWidth = itemBorderWidth
-        self.itemBorderColor = itemBorderColor
-        self.animationType = animationType
-        self.animationDuration = animationDuration
-    }
+    public var animationType: HexagonalAnimationType
+    public var animationDuration: NSTimeInterval
     
     static func defaultAppearance() -> HexagonalItemViewAppearance {
         return HexagonalItemViewAppearance(needToConfigureItem: false,

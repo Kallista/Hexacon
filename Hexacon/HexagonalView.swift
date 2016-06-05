@@ -74,17 +74,17 @@ public final class HexagonalView: UIScrollView {
     private lazy var contentView = UIView()
     
     // MARK: - data
-
+    
     /**
      An object that supports the HexagonalViewDataSource protocol and can provide views or images to configures the HexagonalView.
      */
     public weak var hexagonalDataSource: HexagonalViewDataSource?
-
+    
     /**
      An object that supports the HexagonalViewDelegate protocol and can respond to HexagonalView events.
      */
     public weak var hexagonalDelegate: HexagonalViewDelegate?
-
+    
     /**
      The index of the view where the HexagonalView is or was centered on.
      */
@@ -112,36 +112,34 @@ public final class HexagonalView: UIScrollView {
     public init(frame: CGRect, itemAppearance: HexagonalItemViewAppearance) {
         self.itemAppearance = itemAppearance
         super.init(frame: frame)
-     
-        setUpView()
-    }
-    
-    convenience public override init(frame: CGRect) {
-        self.init(frame: frame, itemAppearance: HexagonalItemViewAppearance.defaultAppearance())
-    }
-
-    required public init?(coder aDecoder: NSCoder) {
-        itemAppearance = HexagonalItemViewAppearance.defaultAppearance()
-        super.init(coder: aDecoder)
         
-        setUpView()
-    }
-
-    func setUpView() {
         //configure scrollView
         delaysContentTouches = false
         showsHorizontalScrollIndicator = false
         showsVerticalScrollIndicator = false
         alwaysBounceHorizontal = true
         alwaysBounceVertical = true
-        bouncesZoom = false
+        bouncesZoom = true
         decelerationRate = UIScrollViewDecelerationRateFast
         delegate = self
-        minimumZoomScale = 0.2
+        minimumZoomScale = 0.8
         maximumZoomScale = 2
+        
         
         //add contentView
         addSubview(contentView)
+    }
+    
+    convenience public override init(frame: CGRect) {
+        self.init(frame: frame, itemAppearance: HexagonalItemViewAppearance.defaultAppearance())
+    }
+    
+    required public init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override public func layoutSubviews() {
+        super.layoutSubviews()
     }
     
     // MARK: - configuration methods
@@ -149,38 +147,29 @@ public final class HexagonalView: UIScrollView {
     private func createHexagonalGrid() {
         //instantiate the hexagonal pattern with the number of views
         hexagonalPattern = HexagonalPattern(size: viewsArray.count, itemSpacing: itemAppearance.itemSpacing, itemSize: itemAppearance.itemSize)
-        hexagonalPattern.repositionCenter = { [weak self] (center, ring, index) in
-            self?.positionAndAnimateItemView(forCenter: center, ring: ring, index: index)
-        }
+        hexagonalPattern.delegate = self
         
         //set the contentView frame with the theorical size of th hexagonal grid
         let contentViewSize = hexagonalPattern.sizeForGridSize()
-        contentView.bounds = CGRectMake(0, 0, contentViewSize, 1.5*contentViewSize)
+        contentView.bounds = CGRectMake(0, 0, 1.5*contentViewSize, contentViewSize) // 0 0 1 1.5
         contentView.center = center
         
         //start creating hte grid
-        hexagonalPattern.createGrid(FromCenter: CGPoint(x: contentView.frame.width/2, y: contentView.frame.height/2))
+        hexagonalPattern.createGrid(FromCenter: CGPoint(x: contentView.frame.width/2.7, y: contentView.frame.height/6)) // 2.5 2.5
     }
-
+    
     private func createHexagonalViewItem(index: Int) -> HexagonalItemView {
         //instantiate the userView with the user
-        
-        var itemView: HexagonalItemView
-
-        if let image = hexagonalDataSource?.hexagonalView(self, imageForIndex: index) {
-            itemView = HexagonalItemView(image: image, appearance: itemAppearance)
-        } else {
-            let view = (hexagonalDataSource?.hexagonalView(self, viewForIndex: index))!
-            itemView = HexagonalItemView(view: view)
-        }
-        
-        itemView.frame = CGRect(x: 0, y: 0, width: itemAppearance.itemSize, height: itemAppearance.itemSize)
+        let itemView = HexagonalItemView(frame: CGRect(x: 0, y: 0, width: itemAppearance.itemSize, height: itemAppearance.itemSize))
         itemView.userInteractionEnabled = true
         //setting the delegate
         itemView.delegate = self
         
         //adding index in order to retrive the view later
         itemView.index = index
+        
+        //adding image with the proper configuration
+        configureItemView(itemView,index:  index)
         
         if itemAppearance.animationType != .None {
             //setting the scale to 0 to perform lauching animation
@@ -190,6 +179,18 @@ public final class HexagonalView: UIScrollView {
         //add to content view
         self.contentView.addSubview(itemView)
         return itemView
+    }
+    
+    
+    private func configureItemView(itemView: HexagonalItemView,index: Int) {
+        if let image = hexagonalDataSource?.hexagonalView(self, imageForIndex: index) {
+            itemView.addImage(image,
+                              configure: itemAppearance.needToConfigureItem,
+                              borderColor: itemAppearance.itemBorderColor,
+                              borderWidth: itemAppearance.itemBorderWidth)
+        } else if let view = hexagonalDataSource?.hexagonalView(self, viewForIndex: index) {
+            itemView.addView(view)
+        }
     }
     
     private func positionAndAnimateItemView(forCenter center: CGPoint, ring: Int, index: Int) {
@@ -223,7 +224,7 @@ public final class HexagonalView: UIScrollView {
         
         //if we are close to a border
         if distanceToBorder < distanceToBeOffset * 2 {
-        //if ere are out of bound
+            //if ere are out of bound
             if distanceToBorder < CGFloat(-(Int(spacing*2.5))) {
                 //hide the view
                 view.transform = CGAffineTransformMakeScale(0, 0)
@@ -247,13 +248,13 @@ public final class HexagonalView: UIScrollView {
         if contentsFrame.size.width < boundsSize.width {
             contentsFrame.origin.x = (boundsSize.width - contentsFrame.size.width) / 2.0
         } else {
-            contentsFrame.origin.x = 0.0
+            contentsFrame.origin.x = boundsSize.width / 2.7
         }
         
         if contentsFrame.size.height < boundsSize.height {
             contentsFrame.origin.y = (boundsSize.height - contentsFrame.size.height) / 2.0
         } else {
-            contentsFrame.origin.y = 0.0
+            contentsFrame.origin.y = boundsSize.height / 6.0 //4
         }
         contentView.frame = contentsFrame
     }
@@ -293,13 +294,13 @@ public final class HexagonalView: UIScrollView {
     private func centerOnIndex(index: Int, zoomScale: CGFloat) {
         guard centerOnEndScroll else { return }
         centerOnEndScroll = false
-
-        //calling delegate 
+        
+        //calling delegate
         hexagonalDelegate?.hexagonalView(self, willCenterOnIndex: index)
         
         //the view to center
         let view = viewsArray[Int(index)]
-
+        
         //find the rect of the view in the contentView scale
         let rectInSelfSpace = HexagonalView.rectInContentView(point: view.center, zoomScale: zoomScale, size: bounds.size)
         scrollRectToVisible(rectInSelfSpace, animated: true)
@@ -329,18 +330,17 @@ public final class HexagonalView: UIScrollView {
     }
     
     /**
-    retrieve the HexagonalItemView from the HexagonalView if it's exist
-    
-    - parameter index: the current index of the HexagonalItemView
-    
-    - returns: an optionnal HexagonalItemView
-    */
+     retrieve the HexagonalItemView from the HexagonalView if it's exist
+     
+     - parameter index: the current index of the HexagonalItemView
+     
+     - returns: an optionnal HexagonalItemView
+     */
     public func viewForIndex(index: Int) -> HexagonalItemView? {
         guard index < viewsArray.count else { return nil }
         
         return viewsArray[index]
     }
-    
     
     // MARK: - class methods
     
@@ -349,7 +349,7 @@ public final class HexagonalView: UIScrollView {
         
         return CGRectMake(center.x-size.width*0.5, center.y-size.height*0.5, size.width, size.height)
     }
-
+    
     private static func closestIndexToContentViewCenter(contentViewCenter: CGPoint,currentIndex: Int,views: [UIView]) -> Int {
         var hasItem = false
         var distance: CGFloat = 0
@@ -396,8 +396,35 @@ extension HexagonalView: UIScrollViewDelegate {
             transformView(view)
         }
     }
-
+    
+    public override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+        zoomScale = zoomScale * 1.5
+        
+        //center the contentView each time we zoom
+        //centerScrollViewContents()
+        
+        
+    }
+    
+    public override func touchesCancelled(touches: Set<UITouch>?, withEvent event: UIEvent?) {
+        //zoomScale = zoomScale / 1.5
+        
+        //center the contentView each time we zoom
+        //centerScrollViewContents()
+    }
+    
+    public override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?) {
+        zoomScale = zoomScale / 1.5
+        
+        centerScrollViewContents()
+    }
+    
     public func scrollViewWillEndDragging(scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
+        
+        //zoomScale = zoomScale / 1.5
+        
+        //centerScrollViewContents()
+        
         let size = self.bounds.size
         
         //the new contentView offset
@@ -412,7 +439,7 @@ extension HexagonalView: UIScrollViewDelegate {
         lastFocusedViewIndex = HexagonalView.closestIndexToContentViewCenter(proposedTargetCenter, currentIndex: lastFocusedViewIndex, views: viewsArray)
         
         //tell that we need to center on new index
-        centerOnEndScroll = true
+        centerOnEndScroll = false
     }
     
     public func scrollViewDidEndDragging(scrollView: UIScrollView, willDecelerate decelerate: Bool) {
@@ -420,15 +447,24 @@ extension HexagonalView: UIScrollViewDelegate {
         guard  !decelerate else { return }
         
         //center the userView
-        centerOnIndex(lastFocusedViewIndex, zoomScale: zoomScale)
+        //centerOnIndex(lastFocusedViewIndex, zoomScale: zoomScale)
     }
-        
+    
     public func scrollViewDidEndDecelerating(scrollView: UIScrollView) {
         //center the userView
-        centerOnIndex(lastFocusedViewIndex, zoomScale: zoomScale)
+        //centerOnIndex(lastFocusedViewIndex, zoomScale: zoomScale)
     }
 }
 
+
+// MARK: - HexagonalPatternDelegate
+
+extension HexagonalView: HexagonalPatternDelegate {
+    
+    func hexagonalPattern(DidCreatePosition center: CGPoint, forRing ring: Int, andIndex index: Int) {
+        positionAndAnimateItemView(forCenter: center, ring: ring, index: index)
+    }
+}
 
 extension HexagonalView: HexagonalItemViewDelegate {
     

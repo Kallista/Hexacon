@@ -8,6 +8,10 @@
 
 import UIKit
 
+protocol HexagonalPatternDelegate: class {
+    func hexagonalPattern(DidCreatePosition center: CGPoint, forRing ring: Int,andIndex index: Int)
+}
+
 final class HexagonalPattern {
     
     // MARK: - typeAlias
@@ -15,8 +19,8 @@ final class HexagonalPattern {
     typealias HexagonalPosition = (center: CGPoint,ring: Int)
     
     // MARK: - data
-
-    internal var repositionCenter: ((CGPoint, Int, Int) -> ())?
+    
+    weak var delegate: HexagonalPatternDelegate?
     
     private var position: HexagonalPosition! {
         didSet {
@@ -26,7 +30,7 @@ final class HexagonalPattern {
                 return
             }
             //each time a new center is set we are sending it back to the scrollView
-            repositionCenter?(position.center, position.ring, positionIndex)
+            delegate?.hexagonalPattern(DidCreatePosition: position.center, forRing: position.ring, andIndex: positionIndex)
             positionIndex += 1
         }
     }
@@ -36,7 +40,7 @@ final class HexagonalPattern {
     private var reachedLastPosition = false
     private var positionIndex = 0
     
-    private let sideNumber: Int = 6
+    private let sideNumber: Int = 4
     
     //properties
     private let size: Int
@@ -56,22 +60,22 @@ final class HexagonalPattern {
     // MARK: - instance methods
     
     /**
-    calculate the theorical size of the grid
-    
-    - returns: the size of the grid
-    */
+     calculate the theorical size of the grid
+     
+     - returns: the size of the grid
+     */
     func sizeForGridSize() -> CGFloat {
         return 2*itemSpacing*CGFloat(maxRadius)
     }
     
     /**
      create the grid with a circular pattern beginning from the center
-     in each loop we are sending back a center for a new View     
+     in each loop we are sending back a center for a new View
      */
     func createGrid(FromCenter newCenter: CGPoint) {
         //initializing the algorythm
         start(newCenter)
-    
+        
         //for each radius
         for radius in 0...maxRadius {
             guard reachedLastPosition == false else { continue }
@@ -99,7 +103,7 @@ final class HexagonalPattern {
         position = (center: newCenter,ring: 0)
         
         //then jump on the first ring
-        position = (center: neighbor(origin: position.center,direction: .LeftDown),ring: 1)
+        position = (center: neighbor(origin: position.center,direction: .Down),ring: 1)
     }
     
     
@@ -110,7 +114,7 @@ final class HexagonalPattern {
             //in each posion in the side
             for directionIndex in 0...radius {
                 //stop if we are at the end of the ring
-                guard !(directionIndex == radius && directionFromCenter == .RightDown) else { continue }
+                guard !(directionIndex == radius && directionFromCenter == .Down) else { continue }
                 
                 //or add a new point
                 position = (center: neighbor(origin: position.center,direction: directionFromCenter),ring: radius + 1)

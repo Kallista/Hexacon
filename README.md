@@ -9,51 +9,17 @@
 <a href="https://github.com/Carthage/Carthage"><img alt="Carthage compatible" src="https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat"/></a>
 </p>
 
+
+## Synopsis
+
 **Hexacon** is a new way to display content in your app like the Apple Watch SpringBoard
 
-Highly inspired by the work of [`lmmenge`](https://github.com/lmmenge/WatchSpringboard-Prototype).
-Special thanks to [`zenly`](https://github.com/znly) for giving me the opportunity to do this
-
-<p align="center">
-<a href="#demo">Demo</a> • <a href="#installation">Installation</a> • <a href="#properties">Properties</a> • <a href="#methods">Methods</a> • <a href="#protocols">Protocols</a> • <a href="#license">License</a>
-</p>
-
+Inspired by the work of [`lmmenge`](https://github.com/lmmenge/WatchSpringboard-Prototype)
 
 ## Demo
 <p align="center">
 <img src="https://raw.githubusercontent.com/gautier-gdx/Hexacon/assets/HexaconDemo3.gif" />
 </p>
-
-You can also use the example provided in the repository or use `pod try Hexacon`
-
-### How to use
-
-Like a UITableView!
-
-add it as a subview
-```swift
-override func viewDidLoad() {
-    super.viewDidLoad()
-
-    let hexagonalView = HexagonalView(frame: self.view.bounds)
-    hexagonalView.hexagonalDataSource = self
-
-    view.addSubview(hexagonalView)
-}
-``` 
-Then use the dataSource protocol
-```swift
-extension ViewController: HexagonalViewDataSource {
-
-    func numberOfItemInHexagonalView(hexagonalView: HexagonalView) -> Int {
-        return data.count - 1
-    }
-
-    func hexagonalView(hexagonalView: HexagonalView, imageForIndex index: Int) -> UIImage? {
-        return data[index]
-    }
-}
-``` 
 
 ## Installation
 
@@ -149,7 +115,7 @@ There is three types of animation available (more to come)
 public enum HexagonalAnimationType { case Spiral, Circle, None }
 ``` 
 
-## Methods
+### Methods
 
 ``` swift
 func reloadData() 
@@ -160,7 +126,7 @@ func viewForIndex(index: Int) -> HexagonalItemView?
 ```
 Return a view at given index if it exists
 
-## Protocols
+### Protocols
 
 There is Two protocols in hexacon, HexagonalViewDataSource and  HexagonalViewDelegate
 
